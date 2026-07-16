@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SistemMakmal UTM</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --surface3: #30363d;
+    --border: #30363d;
+    --accent: #f78166;
+    --accent2: #79c0ff;
+    --accent3: #56d364;
+    --accent4: #e3b341;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --red: #ff7b72;
+    --green: #56d364;
+    --blue: #79c0ff;
+    --yellow: #e3b341;
+    --radius: 8px;
+    --font: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .topbar-logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff;
+    font-family: var(--mono);
+  }
+  .topbar-title { font-weight: 600; font-size: 15px; }
+  .topbar-sub { color: var(--text2); font-size: 12px; font-family: var(--mono); }
+  .topbar-time {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    text-align: right;
+  }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 8px;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active {
+    color: var(--accent2);
+    border-bottom-color: var(--accent2);
+  }
+  .nav-tab .badge {
+    background: var(--surface3);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 10px;
+  }
+  .nav-tab.active .badge {
+    background: rgba(121, 192, 255, 0.15);
+    color: var(--accent2);
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 16px; max-width: 900px; margin: 0 auto; }
+  .module { display: none; }
+  .module.active { display: block; }
+
+  /* ── DASHBOARD ── */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (min-width: 600px) { .dash-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .stat-card:hover { border-color: var(--surface3); transform: translateY(-1px); }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.c1::before { background: var(--accent2); }
+  .stat-card.c2::before { background: var(--accent3); }
+  .stat-card.c3::before { background: var(--accent4); }
+  .stat-card.c4::before { background: var(--red); }
+
+  .stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat-value { font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .stat-card.c1 .stat-value { color: var(--accent2); }
+  .stat-card.c2 .stat-value { color: var(--accent3); }
+  .stat-card.c3 .stat-value { color: var(--accent4); }
+  .stat-card.c4 .stat-value { color: var(--red); }
+
+  .section-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+
+  .recent-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .recent-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: default;
+  }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-item:hover { background: var(--surface2); }
+  .recent-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .ri-blue { background: rgba(121,192,255,0.12); }
+  .ri-green { background: rgba(86,211,100,0.12); }
+  .ri-yellow { background: rgba(227,179,65,0.12); }
+  .ri-red { background: rgba(255,123,114,0.12); }
+
+  .recent-info { flex: 1; min-width: 0; }
+  .recent-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .recent-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .tag-hadir { background: rgba(86,211,100,0.15); color: var(--green); }
+  .tag-pinjam { background: rgba(227,179,65,0.15); color: var(--yellow); }
+  .tag-lulus { background: rgba(86,211,100,0.15); color: var(--green); }
+  .tag-gagal { background: rgba(255,123,114,0.15); color: var(--red); }
+  .tag-kembali { background: rgba(121,192,255,0.15); color: var(--blue); }
+
+  .empty-state {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .empty-state .es-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.5; }
+
+  /* ── FORMS & CARDS ── */
+  .page-header {
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-header h2 { font-size: 18px; font-weight: 600; margin-bottom: 3px; }
+  .page-header p { color: var(--text2); font-size: 12px; }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .form-card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  @media (min-width: 500px) {
+    .form-row.col2 { grid-template-columns: 1fr 1fr; }
+    .form-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 2px rgba(121,192,255,0.1);
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-group select option { background: var(--surface2); }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--accent2); color: var(--bg); }
+  .btn-primary:hover { background: #a5d6ff; }
+  .btn-success { background: var(--green); color: var(--bg); }
+  .btn-success:hover { background: #7ee787; }
+  .btn-warning { background: var(--yellow); color: var(--bg); }
+  .btn-warning:hover { background: #f0c060; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: #ff9188; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn:active { transform: scale(0.97); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .table-hdr {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .table-title { font-size: 13px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--surface2);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .td-mono { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+
+  /* scrollable table on mobile */
+  .table-scroll { overflow-x: auto; }
+
+  /* ── STATUS BADGE ── */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .status::before { content: '●'; font-size: 8px; }
+  .s-hadir { background: rgba(86,211,100,0.12); color: var(--green); }
+  .s-tidak { background: rgba(255,123,114,0.12); color: var(--red); }
+  .s-pinjam { background: rgba(227,179,65,0.12); color: var(--yellow); }
+  .s-kembali { background: rgba(121,192,255,0.12); color: var(--blue); }
+  .s-lulus { background: rgba(86,211,100,0.12); color: var(--green); }
+  .s-gagal { background: rgba(255,123,114,0.12); color: var(--red); }
+  .s-pending { background: rgba(139,148,158,0.15); color: var(--text2); }
+
+  /* ── MCCB SPECIFIC ── */
+  .test-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  @media (max-width: 480px) { .test-grid { grid-template-columns: 1fr 1fr; } }
+  .test-cell {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+  }
+  .test-cell-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+  .test-cell input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    width: 100%;
+    outline: none;
+  }
+
+  .result-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  .result-lbl { font-size: 12px; color: var(--text2); }
+  .result-val {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px;
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── ALERT ── */
+  .alert {
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .alert.show { display: flex; }
+  .alert-success { background: rgba(86,211,100,0.12); border: 1px solid rgba(86,211,100,0.3); color: var(--green); }
+  .alert-error { background: rgba(255,123,114,0.12); border: 1px solid rgba(255,123,114,0.3); color: var(--red); }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* ── CHIP ── */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chip {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip.active, .chip:hover { background: rgba(121,192,255,0.12); border-color: var(--accent2); color: var(--accent2); }
+
+  /* ── SEARCH ── */
+  .search-box {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .search-box input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 8px 12px 8px 34px;
+    border-radius: 6px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box input:focus { border-color: var(--accent2); }
+  .search-box .s-icon {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    font-size: 14px;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+  /* Print/Preview styles */
+  .print-area { display: none; }
+  @media print {
+    .topbar, .nav-tabs, .btn-row, .search-box, .form-card { display: none !important; }
+    .print-area { display: block !important; }
+    body { background: white; color: black; }
+  }
+
+  .info-banner {
+    background: rgba(121,192,255,0.07);
+    border: 1px solid rgba(121,192,255,0.2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">SM</div>
+    <div>
+      <div class="topbar-title">SistemMakmal</div>
+      <div class="topbar-sub">UTM · Pengurusan Makmal</div>
+    </div>
+  </div>
+  <div class="topbar-time" id="clockDisplay">
+    <div id="clockDate" style="font-size:11px;"></div>
+    <div id="clockTime" style="font-size:14px;font-weight:600;"></div>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  <button class="nav-tab" onclick="switchTab('bukulog')" id="tab-bukulog">📋 Buku Log <span class="badge" id="badge-log">0</span></button>
+  <button class="nav-tab" onclick="switchTab('kewpa9')" id="tab-kewpa9">📦 KEW.PA-9 <span class="badge" id="badge-kew">0</span></button>
+  <button class="nav-tab" onclick="switchTab('mccb')" id="tab-mccb">⚡ MCCB Test <span class="badge" id="badge-mccb">0</span></button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ══════════════════════════════════════════════
+       MODULE 0: DASHBOARD
+  ══════════════════════════════════════════════ -->
+  <div class="module active" id="mod-dashboard">
+    <div class="page-header">
+      <h2>Dashboard Ringkasan</h2>
+      <p id="dashDate">Memuatkan...</p>
+    </div>
+
+    <div class="dash-grid">
+      <div class="stat-card c1" onclick="switchTab('bukulog')">
+        <div class="stat-label">Rekod Log</div>
+        <div class="stat-value" id="d-logCount">0</div>
+        <div class="stat-sub">Kehadiran &amp; aktiviti</div>
+      </div>
+      <div class="stat-card c2" onclick="switchTab('kewpa9')">
+        <div class="stat-label">Aset Aktif</div>
+        <div class="stat-value" id="d-assetActive">0</div>
+        <div class="stat-sub">Sedang dipinjam</div>
+      </div>
+      <div class="stat-card c3" onclick="switchTab('mccb')">
+        <div class="stat-label">Ujian MCCB</div>
+        <div class="stat-value" id="d-mccbCount">0</div>
+        <div class="stat-sub">Laporan tersimpan</div>
+      </div>
+      <div class="stat-card c4">
+        <div class="stat-label">Hadir Hari Ini</div>
+        <div class="stat-value" id="d-todayPresent">0</div>
+        <div class="stat-sub">Pengguna makmal</div>
+      </div>
+    </div>
+
+    <div class="section-hdr">
+      <div class="section-title"><span class="dot"></span> Aktiviti Terkini</div>
+    </div>
+    <div class="recent-list" id="recent-activity">
+      <div class="empty-state"><div class="es-icon">📂</div>Tiada rekod lagi</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       MODULE 1: BUKU LOG MAKMAL
+  ══════════════════════════════════════════════ -->
+  <div class="module" id="mod-bukulog">
+    <div class="page-header">
+      <h2>📋 Buku Log Makmal</h2>
+      <p>Rekod kehadiran dan aktiviti makmal</p>
+    </div>
+
+    <div id="alert-log" class="alert alert-success">✓ Rekod berjaya disimpan</div>
+
+    <div class="form-card">
+      <div class="form-card-title">Tambah Rekod Baru</div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Nama Penuh *</label>
+          <input type="text" id="log-nama" placeholder="Nama pengguna makmal">
+        </div>
+        <div class="form-group">
+          <label>No. Matrik / ID *</label>
+          <input type="text" id="log-matrik" placeholder="A12345">
+        </div>
+      </div>
+      <div class="form-row col3">
+        <div class="form-group">
+          <label>Tarikh *</label>
+          <input type="date" id="log-tarikh">
+        </div>
+        <div class="form-group">
+          <label>Masa Masuk</label>
+          <input type="time" id="log-masuk">
+        </div>
+        <div class="form-group">
+          <label>Masa Keluar</label>
+          <input type="time" id="log-keluar">
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Status Kehadiran</label>
+          <select id="log-status">
+            <option value="Hadir">Hadir</option>
+            <option value="Tidak Hadir">Tidak Hadir</option>
+            <option value="Lewat">Lewat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tujuan / Kursus</label>
+          <input type="text" id="log-tujuan" placeholder="cth: LAB3 - SCSR1033">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Aktiviti Dijalankan</label>
+          <textarea id="log-aktiviti" placeholder="Huraikan aktiviti makmal..."></textarea>
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Peralatan Digunakan</label>
+          <input type="text" id="log-peralatan" placeholder="cth: Oscilloscope, DMM">
+        </div>
+        <div class="form-group">
+          <label>Nama Pensyarah / PIC</label>
+          <input type="text" id="log-pensyarah" placeholder="Nama penyeliaan">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Catatan Tambahan</label>
+        <textarea id="log-catatan" placeholder="Sebarang catatan lain..." style="min-height:50px"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveLog()">💾 Simpan Rekod</button>
+        <button class="btn btn-ghost" onclick="clearLogForm()">🔄 Kosongkan</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-hdr">
+        <span class="table-title">Senarai Rekod</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="log-search" placeholder="Cari..." onkeyup="renderLogTable()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:5px;font-size:12px;outline:none;width:120px;">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV('log')">⬇ CSV</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nama</th>
+              <th>Matrik</th>
+              <th>Tarikh</th>
+              <th>Masa</th>
+              <th>Status</th>
+              <th>Aktiviti</th>
+              <th>Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;">Tiada rekod</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       MODULE 2: KEW.PA-9
+  ══════════════════════════════════════════════ -->
+  <div class="module" id="mod-kewpa9">
+    <div class="page-header">
+      <h2>📦 Borang KEW.PA-9</h2>
+      <p>Permohonan Pinjaman Aset Alih Kerajaan</p>
+    </div>
+
+    <div id="alert-kew" class="alert alert-success">✓ Rekod berjaya disimpan</div>
+
+    <div class="info-banner">
+      ℹ️ Borang KEW.PA-9 adalah dokumen rasmi untuk merekod pinjaman aset alih kerajaan. Pastikan semua maklumat adalah tepat dan lengkap.
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">A. Maklumat Pemohon</div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Nama Pemohon *</label>
+          <input type="text" id="kew-nama" placeholder="Nama penuh pemohon">
+        </div>
+        <div class="form-group">
+          <label>No. K/P / Matrik</label>
+          <input type="text" id="kew-kp" placeholder="No. pengenalan">
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Jawatan / Kursus</label>
+          <input type="text" id="kew-jawatan" placeholder="cth: Pelajar Tahun 3">
+        </div>
+        <div class="form-group">
+          <label>Jabatan / Fakulti</label>
+          <input type="text" id="kew-jabatan" placeholder="cth: SKE, UTM">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>No. Telefon</label>
+        <input type="text" id="kew-tel" placeholder="cth: 012-3456789">
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">B. Maklumat Aset</div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>No. Siri Pendaftaran *</label>
+          <input type="text" id="kew-noaset" placeholder="cth: UTM/SKE/LAB-001">
+        </div>
+        <div class="form-group">
+          <label>Keterangan Aset *</label>
+          <input type="text" id="kew-aset" placeholder="cth: Laptop Dell Latitude 5420">
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Jenama / Model</label>
+          <input type="text" id="kew-model" placeholder="cth: Dell / Latitude 5420">
+        </div>
+        <div class="form-group">
+          <label>No. Siri Pengeluar</label>
+          <input type="text" id="kew-siri" placeholder="Serial number">
+        </div>
+      </div>
+      <div class="form-row col3">
+        <div class="form-group">
+          <label>Kuantiti</label>
+          <input type="number" id="kew-kuantiti" placeholder="1" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label>Tarikh Pinjam *</label>
+          <input type="date" id="kew-pinjam">
+        </div>
+        <div class="form-group">
+          <label>Tarikh Pulang (Dirancang)</label>
+          <input type="date" id="kew-pulang">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">C. Tujuan Pinjaman</div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Tujuan Pinjaman *</label>
+          <select id="kew-tujuan">
+            <option value="">-- Pilih --</option>
+            <option value="Kerja Kursus">Kerja Kursus / Projek</option>
+            <option value="Penyelidikan">Penyelidikan</option>
+            <option value="Pembentangan">Pembentangan</option>
+            <option value="Bengkel">Bengkel / Latihan</option>
+            <option value="Lain-lain">Lain-lain</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status Semasa</label>
+          <select id="kew-status">
+            <option value="Dipinjam">Dipinjam</option>
+            <option value="Dikembalikan">Dikembalikan</option>
+            <option value="Rosak">Rosak semasa dipinjam</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Nama Pegawai Meluluskan</label>
+          <input type="text" id="kew-pegawai" placeholder="Nama ketua jabatan">
+        </div>
+        <div class="form-group">
+          <label>Tarikh Dikembalikan (Sebenar)</label>
+          <input type="date" id="kew-dikembalikan">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Catatan / Kondisi Aset</label>
+        <textarea id="kew-catatan" placeholder="Keadaan aset semasa dipinjam/dikembalikan..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-warning" onclick="saveKEW()">💾 Simpan Borang</button>
+        <button class="btn btn-ghost" onclick="clearKEWForm()">🔄 Kosongkan</button>
+        <button class="btn btn-ghost" onclick="printKEW()">🖨 Cetak Borang</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-hdr">
+        <span class="table-title">Rekod Pinjaman</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="kew-search" placeholder="Cari..." onkeyup="renderKEWTable()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:5px;font-size:12px;outline:none;width:120px;">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV('kew')">⬇ CSV</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Pemohon</th>
+              <th>No. Aset</th>
+              <th>Keterangan Aset</th>
+              <th>Tg. Pinjam</th>
+              <th>Tg. Pulang</th>
+              <th>Status</th>
+              <th>Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="kew-tbody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;">Tiada rekod</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       MODULE 3: MCCB TEST REPORT
+  ══════════════════════════════════════════════ -->
+  <div class="module" id="mod-mccb">
+    <div class="page-header">
+      <h2>⚡ MCCB Test Report</h2>
+      <p>Laporan Ujian Molded Case Circuit Breaker</p>
+    </div>
+
+    <div id="alert-mccb" class="alert alert-success">✓ Laporan berjaya disimpan</div>
+
+    <div class="form-card">
+      <div class="form-card-title">Maklumat Am</div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>No. Laporan *</label>
+          <input type="text" id="m-nolaporan" placeholder="RPT-2024-001">
+        </div>
+        <div class="form-group">
+          <label>Tarikh Ujian *</label>
+          <input type="date" id="m-tarikh">
+        </div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Lokasi / Tapak</label>
+          <input type="text" id="m-lokasi" placeholder="cth: PPKEE Makmal HV">
+        </div>
+        <div class="form-group">
+          <label>Juruteknik / Penguji *</label>
+          <input type="text" id="m-juruteknik" placeholder="Nama penguji">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Maklumat MCCB</div>
+      <div class="form-row col3">
+        <div class="form-group">
+          <label>Jenama</label>
+          <input type="text" id="m-jenama" placeholder="cth: Schneider">
+        </div>
+        <div class="form-group">
+          <label>Model</label>
+          <input type="text" id="m-model" placeholder="cth: EasyPact CVS">
+        </div>
+        <div class="form-group">
+          <label>No. Siri</label>
+          <input type="text" id="m-siri" placeholder="Serial no.">
+        </div>
+      </div>
+      <div class="form-row col3">
+        <div class="form-group">
+          <label>Rating Arus (A)</label>
+          <input type="number" id="m-rating" placeholder="63">
+        </div>
+        <div class="form-group">
+          <label>Voltan Rated (V)</label>
+          <input type="number" id="m-voltan" placeholder="415">
+        </div>
+        <div class="form-group">
+          <label>No. Fasa</label>
+          <select id="m-fasa">
+            <option value="3P">3 Fasa</option>
+            <option value="1P">1 Fasa</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Keputusan Ujian Rintangan Penebat (Insulation Resistance Test)</div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Nilai dalam MΩ — Gunakan Megger 500V DC</p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr>
+              <th style="padding:7px 10px;background:var(--surface2);color:var(--text2);text-align:left;border:1px solid var(--border);font-weight:600;font-size:11px;">Fasa</th>
+              <th style="padding:7px 10px;background:var(--surface2);color:var(--text2);text-align:center;border:1px solid var(--border);font-weight:600;font-size:11px;">Fasa–Bumi (MΩ)</th>
+              <th style="padding:7px 10px;background:var(--surface2);color:var(--text2);text-align:center;border:1px solid var(--border);font-weight:600;font-size:11px;">Fasa–Fasa (MΩ)</th>
+              <th style="padding:7px 10px;background:var(--surface2);color:var(--text2);text-align:center;border:1px solid var(--border);font-weight:600;font-size:11px;">Hasil</th>
+            </tr>
+          </thead>
+          <tbody id="ir-tbody">
+            <tr>
+              <td style="padding:6px 10px;border:1px solid var(--border);font-weight:600;color:var(--text2)">R</td>
+              <td style="padding:3px 8px;border:1px solid var(--border);"><input type="number" id="ir-R-bg" placeholder="--" style="background:var(--bg);border:none;color:var(--text);font-family:var(--mono);text-align:center;width:100%;outline:none;padding:4px;"></td>
+              <td style="padding:3px 8px;border:1px solid var(--border);"><input type="number" id="ir-R-ff" placeholder="--" style="background:var(--bg);border:none;color:var(--text);font-family:var(--mono);text-align:center;width:100%;outline:none;padding:4px;"></td>
+              <td style="padding:6px 8px;border:1px solid var(--border);text-align:center;" id="ir-R-res">—</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 10px;border:1px solid var(--border);font-weight:600;color:var(--text2)">Y</td>
+              <td style="padding:3px 8px;border:1px solid var(--border);"><input type="number" id="ir-Y-bg" placeholder="--" style="background:var(--bg);border:none;color:var(--text);font-family:var(--mono);text-align:center;width:100%;outline:none;padding:4px;"></td>
+              <td style="padding:3px 8px;border:1px solid var(--border);"><input type="number" id="ir-Y-ff" placeholder="--" style="background:var(--bg);border:none;color:var(--text);font-family:var(--mono);text-align:center;width:100%;outline:none;padding:4px;"></td>
+              <td style="padding:6px 8px;border:1px solid var(--border);text-align:center;" id="ir-Y-res">—</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 10px;border:1px solid var(--border);font-weight:600;color:var(--text2)">B</td>
+              <td style="padding:3px 8px;border:1px solid var(--border);"><input type="number" id="ir-B-bg" placeholder="--" style="background:var(--bg);border:none;color:var(--text);font-family:var(--mono);text-align:center;width:100%;outline:none;padding:4px;"></td>
+              <td style="padding:3px 8px;border:1px solid var(--border);"><input type="number" id="ir-B-ff" placeholder="--" style="background:var(--bg);border:none;color:var(--text);font-family:var(--mono);text-align:center;width:100%;outline:none;padding:4px;"></td>
+              <td style="padding:6px 8px;border:1px solid var(--border);text-align:center;" id="ir-B-res">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:10px;color:var(--text3);margin-top:6px;">* PASS jika ≥ 1 MΩ (standard MS IEC 60947-2)</p>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Ujian Masa Perjalanan (Trip Time Test)</div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Nilai dalam milisaat (ms)</p>
+      <div class="form-row col3">
+        <div class="form-group">
+          <label>Fasa R – Masa Trip (ms)</label>
+          <input type="number" id="trip-R" placeholder="cth: 25" style="font-family:var(--mono)">
+        </div>
+        <div class="form-group">
+          <label>Fasa Y – Masa Trip (ms)</label>
+          <input type="number" id="trip-Y" placeholder="cth: 23" style="font-family:var(--mono)">
+        </div>
+        <div class="form-group">
+          <label>Fasa B – Masa Trip (ms)</label>
+          <input type="number" id="trip-B" placeholder="cth: 27" style="font-family:var(--mono)">
+        </div>
+      </div>
+      <div class="result-display" id="trip-result-display">
+        <span class="result-lbl">Keputusan Trip Test:</span>
+        <span class="result-val" id="trip-result-val" style="color:var(--text3)">Masukkan nilai</span>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Ujian Sambungan Voltan (Contact Resistance Test)</div>
+      <div class="form-row col3">
+        <div class="form-group">
+          <label>Fasa R (mΩ)</label>
+          <input type="number" id="cr-R" placeholder="cth: 0.5" step="0.01" style="font-family:var(--mono)">
+        </div>
+        <div class="form-group">
+          <label>Fasa Y (mΩ)</label>
+          <input type="number" id="cr-Y" placeholder="cth: 0.5" step="0.01" style="font-family:var(--mono)">
+        </div>
+        <div class="form-group">
+          <label>Fasa B (mΩ)</label>
+          <input type="number" id="cr-B" placeholder="cth: 0.5" step="0.01" style="font-family:var(--mono)">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Keputusan & Perakuan</div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <label>Keputusan Keseluruhan</label>
+          <select id="m-keputusan">
+            <option value="LULUS">✅ LULUS (PASS)</option>
+            <option value="GAGAL">❌ GAGAL (FAIL)</option>
+            <option value="Perlu Semak">⚠️ Perlu Semak Semula</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tindakan Susulan</label>
+          <select id="m-tindakan">
+            <option value="Tiada">Tiada tindakan diperlukan</option>
+            <option value="Penggantian">Ganti MCCB baharu</option>
+            <option value="Penyelenggaraan">Penyelenggaraan berkala</option>
+            <option value="Ujian Semula">Ulang ujian dalam 6 bulan</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Pemerhatian / Ulasan Juruteknik</label>
+        <textarea id="m-ulasan" placeholder="Sebarang pemerhatian atau cadangan teknikal..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="saveMCCB()">💾 Simpan Laporan</button>
+        <button class="btn btn-ghost" onclick="clearMCCBForm()">🔄 Kosongkan</button>
+        <button class="btn btn-ghost" onclick="previewMCCB()">👁 Pratonton</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-hdr">
+        <span class="table-title">Rekod Laporan MCCB</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="mccb-search" placeholder="Cari..." onkeyup="renderMCCBTable()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:5px;font-size:12px;outline:none;width:120px;">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV('mccb')">⬇ CSV</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>No. Laporan</th>
+              <th>Tarikh</th>
+              <th>Jenama/Model</th>
+              <th>Juruteknik</th>
+              <th>Keputusan</th>
+              <th>Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="mccb-tbody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;">Tiada rekod</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<!-- MODAL: Preview MCCB -->
+<div class="modal-overlay" id="modal-mccb">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title">
+      <span>⚡ Pratonton Laporan MCCB</span>
+      <button class="modal-close" onclick="closeModal('modal-mccb')">✕</button>
+    </div>
+    <div id="modal-mccb-content"></div>
+    <div class="btn-row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-mccb')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: View Log Detail -->
+<div class="modal-overlay" id="modal-log">
+  <div class="modal">
+    <div class="modal-title">
+      <span>📋 Butiran Rekod Log</span>
+      <button class="modal-close" onclick="closeModal('modal-log')">✕</button>
+    </div>
+    <div id="modal-log-content"></div>
+    <div class="btn-row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-log')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// STORAGE HELPERS
+// ─────────────────────────────────────────────
+const KEYS = { log: 'sm_log', kew: 'sm_kew', mccb: 'sm_mccb' };
+
+function getData(key) {
+  try { return JSON.parse(localStorage.getItem(KEYS[key])) || []; }
+  catch { return []; }
+}
+function setData(key, arr) {
+  localStorage.setItem(KEYS[key], JSON.stringify(arr));
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,4); }
+
+// ─────────────────────────────────────────────
+// CLOCK
+// ─────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const days = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+  const months = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
+  document.getElementById('clockDate').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('clockTime').textContent =
+    now.toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  document.getElementById('dashDate').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} · Dikemaskini masa nyata`;
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ─────────────────────────────────────────────
+// TAB NAVIGATION
+// ─────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('mod-' + name).classList.add('active');
+  const tabEl = document.querySelector(`.nav-tab[onclick="switchTab('${name}')"]`);
+  if (tabEl) tabEl.classList.add('active');
+  if (name === 'dashboard') updateDashboard();
+  if (name === 'bukulog') renderLogTable();
+  if (name === 'kewpa9') renderKEWTable();
+  if (name === 'mccb') renderMCCBTable();
+}
+
+// ─────────────────────────────────────────────
+// ALERTS
+// ─────────────────────────────────────────────
+function showAlert(id, msg, type = 'success') {
+  const el = document.getElementById(id);
+  el.className = `alert alert-${type} show`;
+  el.textContent = (type === 'success' ? '✓ ' : '✕ ') + msg;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─────────────────────────────────────────────
+// MODULE 1: BUKU LOG
+// ─────────────────────────────────────────────
+function setDefaultLogDate() {
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toTimeString().slice(0,5);
+  if (!document.getElementById('log-tarikh').value) {
+    document.getElementById('log-tarikh').value = today;
+    document.getElementById('log-masuk').value = now;
+  }
+}
+
+function saveLog() {
+  const nama = document.getElementById('log-nama').value.trim();
+  const matrik = document.getElementById('log-matrik').value.trim();
+  const tarikh = document.getElementById('log-tarikh').value;
+  if (!nama || !matrik || !tarikh) {
+    showAlert('alert-log', 'Sila lengkapkan medan bertanda *', 'error');
+    return;
+  }
+  const rec = {
+    id: genId(),
+    nama, matrik, tarikh,
+    masuk: document.getElementById('log-masuk').value,
+    keluar: document.getElementById('log-keluar').value,
+    status: document.getElementById('log-status').value,
+    tujuan: document.getElementById('log-tujuan').value,
+    aktiviti: document.getElementById('log-aktiviti').value,
+    peralatan: document.getElementById('log-peralatan').value,
+    pensyarah: document.getElementById('log-pensyarah').value,
+    catatan: document.getElementById('log-catatan').value,
+    savedAt: new Date().toISOString()
+  };
+  const data = getData('log');
+  data.unshift(rec);
+  setData('log', data);
+  showAlert('alert-log', 'Rekod berjaya disimpan!');
+  clearLogForm();
+  renderLogTable();
+  updateBadges();
+}
+
+function clearLogForm() {
+  ['log-nama','log-matrik','log-masuk','log-keluar','log-tujuan','log-aktiviti','log-peralatan','log-pensyarah','log-catatan'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('log-status').value = 'Hadir';
+  document.getElementById('log-tarikh').value = new Date().toISOString().split('T')[0];
+}
+
+function renderLogTable() {
+  const data = getData('log');
+  const q = (document.getElementById('log-search')?.value || '').toLowerCase();
+  const filtered = data.filter(r =>
+    r.nama.toLowerCase().includes(q) || r.matrik.toLowerCase().includes(q) ||
+    r.tarikh.includes(q) || (r.tujuan||'').toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('log-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;">Tiada rekod ditemui</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((r, i) => {
+    const sc = r.status === 'Hadir' ? 's-hadir' : r.status === 'Lewat' ? 's-pending' : 's-tidak';
+    const masa = r.masuk ? `${r.masuk}${r.keluar ? ' – '+r.keluar : ''}` : '—';
+    return `<tr>
+      <td class="td-mono">${i+1}</td>
+      <td style="font-weight:500">${r.nama}</td>
+      <td class="td-mono">${r.matrik}</td>
+      <td class="td-mono">${r.tarikh}</td>
+      <td class="td-mono">${masa}</td>
+      <td><span class="status ${sc}">${r.status}</span></td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${r.aktiviti||'—'}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="viewLog('${r.id}')">👁</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRec('log','${r.id}', renderLogTable)">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function viewLog(id) {
+  const rec = getData('log').find(r => r.id === id);
+  if (!rec) return;
+  document.getElementById('modal-log-content').innerHTML = `
+    <div style="display:grid;gap:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div style="font-size:11px;color:var(--text3)">Nama</div><div style="font-weight:600">${rec.nama}</div></div>
+        <div><div style="font-size:11px;color:var(--text3)">No. Matrik</div><div class="td-mono">${rec.matrik}</div></div>
+        <div><div style="font-size:11px;color:var(--text3)">Tarikh</div><div class="td-mono">${rec.tarikh}</div></div>
+        <div><div style="font-size:11px;color:var(--text3)">Masa</div><div class="td-mono">${rec.masuk||'—'} – ${rec.keluar||'—'}</div></div>
+        <div><div style="font-size:11px;color:var(--text3)">Status</div><div>${rec.status}</div></div>
+        <div><div style="font-size:11px;color:var(--text3)">Tujuan</div><div>${rec.tujuan||'—'}</div></div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;margin-top:4px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Aktiviti</div>
+        <div style="font-size:13px">${rec.aktiviti||'Tiada'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div style="font-size:11px;color:var(--text3)">Peralatan</div><div style="font-size:13px">${rec.peralatan||'—'}</div></div>
+        <div><div style="font-size:11px;color:var(--text3)">Pensyarah/PIC</div><div style="font-size:13px">${rec.pensyarah||'—'}</div></div>
+      </div>
+      ${rec.catatan ? `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Catatan</div><div style="font-size:13px">${rec.catatan}</div></div>` : ''}
+    </div>`;
+  document.getElementById('modal-log').classList.add('open');
+}
+
+// ─────────────────────────────────────────────
+// MODULE 2: KEW.PA-9
+// ─────────────────────────────────────────────
+function saveKEW() {
+  const nama = document.getElementById('kew-nama').value.trim();
+  const noaset = document.getElementById('kew-noaset').value.trim();
+  const aset = document.getElementById('kew-aset').value.trim();
+  const tarikh = document.getElementById('kew-pinjam').value;
+  if (!nama || !noaset || !aset || !tarikh) {
+    showAlert('alert-kew', 'Sila lengkapkan medan bertanda *', 'error');
+    return;
+  }
+  const rec = {
+    id: genId(),
+    nama,
+    kp: document.getElementById('kew-kp').value,
+    jawatan: document.getElementById('kew-jawatan').value,
+    jabatan: document.getElementById('kew-jabatan').value,
+    tel: document.getElementById('kew-tel').value,
+    noaset, aset,
+    model: document.getElementById('kew-model').value,
+    siri: document.getElementById('kew-siri').value,
+    kuantiti: document.getElementById('kew-kuantiti').value,
+    tarikhPinjam: tarikh,
+    tarikhPulang: document.getElementById('kew-pulang').value,
+    tarikhDikembalikan: document.getElementById('kew-dikembalikan').value,
+    tujuan: document.getElementById('kew-tujuan').value,
+    status: document.getElementById('kew-status').value,
+    pegawai: document.getElementById('kew-pegawai').value,
+    catatan: document.getElementById('kew-catatan').value,
+    savedAt: new Date().toISOString()
+  };
+  const data = getData('kew');
+  data.unshift(rec);
+  setData('kew', data);
+  showAlert('alert-kew', 'Borang KEW.PA-9 berjaya disimpan!');
+  clearKEWForm();
+  renderKEWTable();
+  updateBadges();
+}
+
+function clearKEWForm() {
+  ['kew-nama','kew-kp','kew-jawatan','kew-jabatan','kew-tel','kew-noaset','kew-aset','kew-model','kew-siri','kew-pulang','kew-dikembalikan','kew-pegawai','kew-catatan'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('kew-kuantiti').value = '1';
+  document.getElementById('kew-pinjam').value = new Date().toISOString().split('T')[0];
+  document.getElementById('kew-status').value = 'Dipinjam';
+  document.getElementById('kew-tujuan').value = '';
+}
+
+function renderKEWTable() {
+  const data = getData('kew');
+  const q = (document.getElementById('kew-search')?.value || '').toLowerCase();
+  const filtered = data.filter(r =>
+    r.nama.toLowerCase().includes(q) || r.noaset.toLowerCase().includes(q) ||
+    r.aset.toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('kew-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;">Tiada rekod</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((r, i) => {
+    const sc = r.status === 'Dikembalikan' ? 's-kembali' : r.status === 'Rosak' ? 's-tidak' : 's-pinjam';
+    return `<tr>
+      <td class="td-mono">${i+1}</td>
+      <td style="font-weight:500">${r.nama}</td>
+      <td class="td-mono">${r.noaset}</td>
+      <td>${r.aset}</td>
+      <td class="td-mono">${r.tarikhPinjam}</td>
+      <td class="td-mono">${r.tarikhPulang||'—'}</td>
+      <td><span class="status ${sc}">${r.status}</span></td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-warning btn-sm" onclick="updateKEWStatus('${r.id}')">↩</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRec('kew','${r.id}', renderKEWTable)">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateKEWStatus(id) {
+  const data = getData('kew');
+  const idx = data.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const opts = ['Dipinjam','Dikembalikan','Rosak'];
+  const cur = opts.indexOf(data[idx].status);
+  data[idx].status = opts[(cur + 1) % opts.length];
+  if (data[idx].status === 'Dikembalikan') data[idx].tarikhDikembalikan = new Date().toISOString().split('T')[0];
+  setData('kew', data);
+  renderKEWTable();
+  updateBadges();
+}
+
+function printKEW() {
+  const rec = {
+    nama: document.getElementById('kew-nama').value,
+    noaset: document.getElementById('kew-noaset').value,
+    aset: document.getElementById('kew-aset').value,
+    tarikhPinjam: document.getElementById('kew-pinjam').value,
+    jabatan: document.getElementById('kew-jabatan').value,
+  };
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>KEW.PA-9</title>
+  <style>body{font-family:Arial,sans-serif;padding:30px;font-size:13px}
+  h2{text-align:center;margin-bottom:5px}
+  table{width:100%;border-collapse:collapse;margin:12px 0}
+  td,th{border:1px solid #333;padding:6px 10px}
+  .sign{margin-top:40px;display:flex;justify-content:space-between}
+  .sign div{text-align:center;width:200px;border-top:1px solid #333;padding-top:4px}
+  </style></head><body>
+  <h2>BORANG KEW.PA-9</h2>
+  <p style="text-align:center;margin-bottom:20px">Permohonan Pinjaman Aset Alih Kerajaan</p>
+  <table>
+    <tr><td width="40%"><b>Nama Pemohon</b></td><td>${rec.nama||'—'}</td></tr>
+    <tr><td><b>Jabatan/Fakulti</b></td><td>${rec.jabatan||'—'}</td></tr>
+    <tr><td><b>No. Pendaftaran Aset</b></td><td>${rec.noaset||'—'}</td></tr>
+    <tr><td><b>Keterangan Aset</b></td><td>${rec.aset||'—'}</td></tr>
+    <tr><td><b>Tarikh Pinjam</b></td><td>${rec.tarikhPinjam||'—'}</td></tr>
+  </table>
+  <div class="sign">
+    <div>Pemohon</div>
+    <div>Pegawai Meluluskan</div>
+    <div>Penerima Aset</div>
+  </div>
+  </body></html>`);
+  w.print();
+}
+
+// ─────────────────────────────────────────────
+// MODULE 3: MCCB
+// ─────────────────────────────────────────────
+// Live IR check
+['R','Y','B'].forEach(ph => {
+  ['bg','ff'].forEach(t => {
+    const el = document.getElementById(`ir-${ph}-${t}`);
+    if (el) el.addEventListener('input', () => updateIRResult(ph));
+  });
+});
+
+function updateIRResult(ph) {
+  const bg = parseFloat(document.getElementById(`ir-${ph}-bg`).value);
+  const ff = parseFloat(document.getElementById(`ir-${ph}-ff`).value);
+  const el = document.getElementById(`ir-${ph}-res`);
+  if (isNaN(bg) && isNaN(ff)) { el.innerHTML = '—'; return; }
+  const pass = (isNaN(bg) || bg >= 1) && (isNaN(ff) || ff >= 1);
+  el.innerHTML = pass
+    ? `<span class="status s-lulus">PASS</span>`
+    : `<span class="status s-gagal">FAIL</span>`;
+}
+
+// Trip time live result
+['trip-R','trip-Y','trip-B'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateTripResult);
+});
+
+function updateTripResult() {
+  const R = parseFloat(document.getElementById('trip-R').value);
+  const Y = parseFloat(document.getElementById('trip-Y').value);
+  const B = parseFloat(document.getElementById('trip-B').value);
+  const vals = [R,Y,B].filter(v => !isNaN(v));
+  if (!vals.length) { document.getElementById('trip-result-val').textContent = 'Masukkan nilai'; document.getElementById('trip-result-val').style.color='var(--text3)'; return; }
+  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const pass = vals.every(v => v <= 100); // example threshold 100ms
+  const el = document.getElementById('trip-result-val');
+  el.textContent = `Purata: ${avg.toFixed(1)} ms — ${pass ? 'PASS' : 'SEMAK'}`;
+  el.style.color = pass ? 'var(--green)' : 'var(--yellow)';
+}
+
+function saveMCCB() {
+  const nolaporan = document.getElementById('m-nolaporan').value.trim();
+  const tarikh = document.getElementById('m-tarikh').value;
+  const juruteknik = document.getElementById('m-juruteknik').value.trim();
+  if (!nolaporan || !tarikh || !juruteknik) {
+    showAlert('alert-mccb', 'Sila lengkapkan medan bertanda *', 'error');
+    return;
+  }
+  const rec = {
+    id: genId(),
+    nolaporan, tarikh, juruteknik,
+    lokasi: document.getElementById('m-lokasi').value,
+    jenama: document.getElementById('m-jenama').value,
+    model: document.getElementById('m-model').value,
+    siri: document.getElementById('m-siri').value,
+    rating: document.getElementById('m-rating').value,
+    voltan: document.getElementById('m-voltan').value,
+    fasa: document.getElementById('m-fasa').value,
+    ir: {
+      R: { bg: document.getElementById('ir-R-bg').value, ff: document.getElementById('ir-R-ff').value },
+      Y: { bg: document.getElementById('ir-Y-bg').value, ff: document.getElementById('ir-Y-ff').value },
+      B: { bg: document.getElementById('ir-B-bg').value, ff: document.getElementById('ir-B-ff').value },
+    },
+    trip: {
+      R: document.getElementById('trip-R').value,
+      Y: document.getElementById('trip-Y').value,
+      B: document.getElementById('trip-B').value,
+    },
+    cr: {
+      R: document.getElementById('cr-R').value,
+      Y: document.getElementById('cr-Y').value,
+      B: document.getElementById('cr-B').value,
+    },
+    keputusan: document.getElementById('m-keputusan').value,
+    tindakan: document.getElementById('m-tindakan').value,
+    ulasan: document.getElementById('m-ulasan').value,
+    savedAt: new Date().toISOString()
+  };
+  const data = getData('mccb');
+  data.unshift(rec);
+  setData('mccb', data);
+  showAlert('alert-mccb', 'Laporan MCCB berjaya disimpan!');
+  clearMCCBForm();
+  renderMCCBTable();
+  updateBadges();
+}
+
+function clearMCCBForm() {
+  ['m-nolaporan','m-lokasi','m-juruteknik','m-jenama','m-model','m-siri','m-rating','m-voltan','m-ulasan',
+   'ir-R-bg','ir-R-ff','ir-Y-bg','ir-Y-ff','ir-B-bg','ir-B-ff',
+   'trip-R','trip-Y','trip-B','cr-R','cr-Y','cr-B'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('m-tarikh').value = new Date().toISOString().split('T')[0];
+  document.getElementById('m-keputusan').value = 'LULUS';
+  document.getElementById('m-tindakan').value = 'Tiada';
+  ['R','Y','B'].forEach(ph => { document.getElementById(`ir-${ph}-res`).innerHTML = '—'; });
+  document.getElementById('trip-result-val').textContent = 'Masukkan nilai';
+  document.getElementById('trip-result-val').style.color = 'var(--text3)';
+}
+
+function renderMCCBTable() {
+  const data = getData('mccb');
+  const q = (document.getElementById('mccb-search')?.value || '').toLowerCase();
+  const filtered = data.filter(r =>
+    r.nolaporan.toLowerCase().includes(q) || r.juruteknik.toLowerCase().includes(q) ||
+    (r.jenama||'').toLowerCase().includes(q) || r.tarikh.includes(q)
+  );
+  const tbody = document.getElementById('mccb-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;">Tiada rekod</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((r, i) => {
+    const sc = r.keputusan === 'LULUS' ? 's-lulus' : r.keputusan === 'GAGAL' ? 's-gagal' : 's-pending';
+    return `<tr>
+      <td class="td-mono">${i+1}</td>
+      <td class="td-mono" style="font-weight:600;color:var(--accent2)">${r.nolaporan}</td>
+      <td class="td-mono">${r.tarikh}</td>
+      <td>${r.jenama||'—'} ${r.model||''}</td>
+      <td>${r.juruteknik}</td>
+      <td><span class="status ${sc}">${r.keputusan}</span></td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="previewMCCBRec('${r.id}')">👁</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRec('mccb','${r.id}', renderMCCBTable)">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function previewMCCB() {
+  // build preview from current form
+  const rec = {
+    nolaporan: document.getElementById('m-nolaporan').value || 'DRAF',
+    tarikh: document.getElementById('m-tarikh').value,
+    lokasi: document.getElementById('m-lokasi').value,
+    juruteknik: document.getElementById('m-juruteknik').value,
+    jenama: document.getElementById('m-jenama').value,
+    model: document.getElementById('m-model').value,
+    rating: document.getElementById('m-rating').value,
+    voltan: document.getElementById('m-voltan').value,
+    keputusan: document.getElementById('m-keputusan').value,
+    tindakan: document.getElementById('m-tindakan').value,
+    ulasan: document.getElementById('m-ulasan').value,
+    ir: {
+      R: { bg: document.getElementById('ir-R-bg').value, ff: document.getElementById('ir-R-ff').value },
+      Y: { bg: document.getElementById('ir-Y-bg').value, ff: document.getElementById('ir-Y-ff').value },
+      B: { bg: document.getElementById('ir-B-bg').value, ff: document.getElementById('ir-B-ff').value },
+    },
+    trip: {
+      R: document.getElementById('trip-R').value,
+      Y: document.getElementById('trip-Y').value,
+      B: document.getElementById('trip-B').value,
+    }
+  };
+  renderMCCBModal(rec);
+}
+
+function previewMCCBRec(id) {
+  const rec = getData('mccb').find(r => r.id === id);
+  if (rec) renderMCCBModal(rec);
+}
+
+function renderMCCBModal(r) {
+  const kCol = r.keputusan === 'LULUS' ? 'var(--green)' : r.keputusan === 'GAGAL' ? 'var(--red)' : 'var(--yellow)';
+  document.getElementById('modal-mccb-content').innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+        <div><span style="color:var(--text3);font-size:11px">No. Laporan</span><br><b style="font-family:var(--mono);color:var(--accent2)">${r.nolaporan}</b></div>
+        <div><span style="color:var(--text3);font-size:11px">Tarikh</span><br><b class="td-mono">${r.tarikh||'—'}</b></div>
+        <div><span style="color:var(--text3);font-size:11px">Lokasi</span><br>${r.lokasi||'—'}</div>
+        <div><span style="color:var(--text3);font-size:11px">Juruteknik</span><br>${r.juruteknik||'—'}</div>
+        <div><span style="color:var(--text3);font-size:11px">Jenama/Model</span><br>${r.jenama||'—'} ${r.model||''}</div>
+        <div><span style="color:var(--text3);font-size:11px">Rating</span><br><b class="td-mono">${r.rating||'—'} A / ${r.voltan||'—'} V</b></div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Ujian Rintangan Penebat (MΩ)</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px">
+      <tr style="background:var(--surface2)"><th style="padding:6px 8px;border:1px solid var(--border);text-align:left;font-size:11px;color:var(--text2)">Fasa</th><th style="padding:6px 8px;border:1px solid var(--border);font-size:11px;color:var(--text2)">F–Bumi</th><th style="padding:6px 8px;border:1px solid var(--border);font-size:11px;color:var(--text2)">F–Fasa</th></tr>
+      ${['R','Y','B'].map(ph => `<tr><td style="padding:6px 8px;border:1px solid var(--border);font-weight:600;color:var(--text2)">${ph}</td><td style="padding:6px 8px;border:1px solid var(--border);text-align:center;font-family:var(--mono)">${r.ir?.[ph]?.bg||'—'}</td><td style="padding:6px 8px;border:1px solid var(--border);text-align:center;font-family:var(--mono)">${r.ir?.[ph]?.ff||'—'}</td></tr>`).join('')}
+    </table>
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Trip Time (ms)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      ${['R','Y','B'].map(ph => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">Fasa ${ph}</div><div style="font-family:var(--mono);font-weight:700;font-size:16px">${r.trip?.[ph]||'—'}</div></div>`).join('')}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px 16px">
+      <div style="font-size:13px;color:var(--text2)">Keputusan Keseluruhan</div>
+      <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${kCol}">${r.keputusan}</div>
+    </div>
+    ${r.ulasan ? `<div style="margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Ulasan Juruteknik</div><div style="font-size:13px">${r.ulasan}</div></div>` : ''}
+  `;
+  document.getElementById('modal-mccb').classList.add('open');
+}
+
+// ─────────────────────────────────────────────
+// SHARED: DELETE
+// ─────────────────────────────────────────────
+function deleteRec(key, id, cb) {
+  if (!confirm('Padam rekod ini?')) return;
+  const data = getData(key).filter(r => r.id !== id);
+  setData(key, data);
+  cb();
+  updateBadges();
+  updateDashboard();
+}
+
+// ─────────────────────────────────────────────
+// MODAL
+// ─────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ─────────────────────────────────────────────
+// BADGES & DASHBOARD
+// ─────────────────────────────────────────────
+function updateBadges() {
+  document.getElementById('badge-log').textContent = getData('log').length;
+  document.getElementById('badge-kew').textContent = getData('kew').length;
+  document.getElementById('badge-mccb').textContent = getData('mccb').length;
+}
+
+function updateDashboard() {
+  const logs = getData('log');
+  const kews = getData('kew');
+  const mccbs = getData('mccb');
+  const today = new Date().toISOString().split('T')[0];
+
+  document.getElementById('d-logCount').textContent = logs.length;
+  document.getElementById('d-assetActive').textContent = kews.filter(r => r.status === 'Dipinjam').length;
+  document.getElementById('d-mccbCount').textContent = mccbs.length;
+  document.getElementById('d-todayPresent').textContent = logs.filter(r => r.tarikh === today && r.status === 'Hadir').length;
+
+  // build recent activity
+  const all = [
+    ...logs.slice(0,5).map(r => ({ t: r.savedAt, icon: '📋', cls: 'ri-blue', title: r.nama, meta: `Log · ${r.tarikh}`, tag: r.status, tagCls: r.status==='Hadir'?'tag-hadir':'tag-lulus' })),
+    ...kews.slice(0,5).map(r => ({ t: r.savedAt, icon: '📦', cls: 'ri-yellow', title: r.aset, meta: `KEW.PA-9 · ${r.tarikhPinjam}`, tag: r.status, tagCls: r.status==='Dikembalikan'?'tag-kembali':'tag-pinjam' })),
+    ...mccbs.slice(0,5).map(r => ({ t: r.savedAt, icon: '⚡', cls: 'ri-green', title: r.nolaporan, meta: `MCCB · ${r.tarikh}`, tag: r.keputusan, tagCls: r.keputusan==='LULUS'?'tag-lulus':'tag-gagal' })),
+  ].sort((a,b) => new Date(b.t) - new Date(a.t)).slice(0,8);
+
+  const el = document.getElementById('recent-activity');
+  if (!all.length) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">📂</div>Tiada aktiviti lagi. Mula tambah rekod.</div>`;
+  } else {
+    el.innerHTML = all.map(a => `
+      <div class="recent-item">
+        <div class="recent-icon ${a.cls}">${a.icon}</div>
+        <div class="recent-info">
+          <div class="recent-name">${a.title}</div>
+          <div class="recent-meta">${a.meta}</div>
+        </div>
+        <span class="recent-tag ${a.tagCls}">${a.tag}</span>
+      </div>`).join('');
+  }
+}
+
+// ─────────────────────────────────────────────
+// EXPORT CSV
+// ─────────────────────────────────────────────
+function exportCSV(key) {
+  const data = getData(key);
+  if (!data.length) { alert('Tiada data untuk dieksport.'); return; }
+  const keys = Object.keys(data[0]).filter(k => k !== 'id' && k !== 'ir' && k !== 'trip' && k !== 'cr');
+  const rows = [keys.join(','), ...data.map(r => keys.map(k => `"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','))];
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${key}_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  setDefaultLogDate();
+  document.getElementById('kew-pinjam').value = new Date().toISOString().split('T')[0];
+  document.getElementById('m-tarikh').value = new Date().toISOString().split('T')[0];
+  updateBadges();
+  updateDashboard();
+});
+</script>
+</body>
+</html>
